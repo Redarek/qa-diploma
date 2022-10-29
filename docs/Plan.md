@@ -16,6 +16,8 @@
         - Обычная покупка картой B (пустые и невалидные данные)
         - Покупка в кредит картой B (пустые и невалидные данные)
 
+    -  [Google таблица с тест-кейсами валидации](https://docs.google.com/spreadsheets/d/1UqI8QPI4CFlLypL6ZwX-dr8x_BfT9CW7sZ4vYoJh1po/edit?usp=sharing)
+
 - #### тесты API
 
     - Позитивные
