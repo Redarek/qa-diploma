@@ -2,16 +2,13 @@
 ## Краткое описание
 Была проведена автоматизация тестирования согласно [плану](Plan.md).  
 
-Сделано:
-* Позитивные и негативные UI тесты с проверкой транзакции в БД
-
 ## Количество тест-кейсов
-* Всего: 60 тестов
-* Успешных: 18 (30%)
-* Неуспешных: 42 (70%)
+* Всего: 60
+* Успешных: 30%
+* Неуспешных: 70%
 
 <img width="607" alt="Screenshot 2022-11-21 at 00 08 12" src="https://user-images.githubusercontent.com/80126370/202926277-81db2fa7-d655-4c53-8db7-4717b41ff1d9.png">
 
 ## Общие рекомендации
 
-* Исправить все [найденные](https://github.com/Redarek/qa-diploma/issues?q=is%3Aissue+is%3Aopen+label%3Abug) баги
+* Исправить [найденные баги](https://github.com/Redarek/qa-diploma/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
