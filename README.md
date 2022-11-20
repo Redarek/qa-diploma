@@ -1,7 +1,10 @@
 # Дипломный проект «Тестировщик ПО»
+
 [План автоматизации](https://github.com/Redarek/qa-diploma/blob/master/docs/Plan.md)
-Отчет по итогам тестировани
-Отчет по итогам автоматизации
+
+[Отчет по итогам тестирования](https://github.com/Redarek/qa-diploma/blob/master/docs/Report.md)
+
+[Отчет по итогам автоматизации](https://github.com/Redarek/qa-diploma/blob/master/docs/Summary.md)
 
 # Процедура запуска
 
