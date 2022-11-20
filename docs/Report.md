@@ -4,10 +4,10 @@
 
 ## Количество тест-кейсов
 * Всего: 60
-* Успешных: 30%
-* Неуспешных: 70%
+* Успешных: 26.66%
+* Неуспешных: 73.33%
 
-<img width="607" alt="Screenshot 2022-11-21 at 00 08 12" src="https://user-images.githubusercontent.com/80126370/202926277-81db2fa7-d655-4c53-8db7-4717b41ff1d9.png">
+<img width="619" alt="Screenshot 2022-11-21 at 00 27 59" src="https://user-images.githubusercontent.com/80126370/202927109-638f22be-40bc-4715-abeb-e106d7ba5dc7.png">
 
 ## Общие рекомендации
 
