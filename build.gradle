@@ -33,6 +33,7 @@ dependencies {
     testImplementation 'io.rest-assured:rest-assured:4.1.2'
     testImplementation 'io.qameta.allure:allure-rest-assured:2.13.0'
     testImplementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.github.javafaker:javafaker:1.0.2'
 }
 
 test {

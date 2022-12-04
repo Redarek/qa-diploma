@@ -7,12 +7,8 @@ import org.apache.commons.dbutils.handlers.BeanHandler;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 public class DBUtils {
     private static String url = System.getProperty("db.url");
-    private static String appURL = System.getProperty("app.url");
-    private static String appPORT = System.getProperty("app.port");
     private static String userDB = System.getProperty("app.userDB");
     private static String password = System.getProperty("app.password");
 
@@ -24,34 +20,38 @@ public class DBUtils {
         runner.update(conn, "DELETE FROM order_entity;");
     }
 
-    public static void checkPaymentStatus(Status status) throws SQLException {
+    public static Status checkPaymentStatus() throws SQLException {
         val runner = new QueryRunner();
         val conn = DriverManager.getConnection(url, userDB, password);
         val paymentDataSQL = "SELECT status FROM payment_entity;";
         val payment = runner.query(conn, paymentDataSQL, new BeanHandler<>(PaymentModel.class));
-        assertEquals(status, payment.status);
+//        assertEquals(status, payment.status);
+        return payment.status;
     }
-    public static void checkPaymentEmptyStatus() throws SQLException {
+    public static PaymentModel checkPaymentEmptyStatus() throws SQLException {
         val runner = new QueryRunner();
         val conn = DriverManager.getConnection(url, userDB, password);
         val paymentDataSQL = "SELECT status FROM payment_entity WHERE status IS NULL;";
         val credit = runner.query(conn, paymentDataSQL, new BeanHandler<>(PaymentModel.class));
-        assertEquals(null, credit);
+//        assertEquals(null, credit);
+        return credit;
     }
 
-    public static void checkCreditStatus(Status status) throws SQLException {
+    public static Status checkCreditStatus() throws SQLException {
         val runner = new QueryRunner();
         val conn = DriverManager.getConnection(url, userDB, password);
         val creditDataSQL = "SELECT status FROM credit_request_entity;";
         val credit = runner.query(conn, creditDataSQL, new BeanHandler<>(CreditModel.class));
-        assertEquals(status, credit.status);
+//        assertEquals(status, credit.status);
+        return credit.status;
     }
 
-    public static void checkCreditEmptyStatus() throws SQLException {
+    public static CreditModel checkCreditEmptyStatus() throws SQLException {
         val runner = new QueryRunner();
         val conn = DriverManager.getConnection(url, userDB, password);
         val creditDataSQL = "SELECT status FROM credit_request_entity WHERE status IS NULL;";
         val credit = runner.query(conn, creditDataSQL, new BeanHandler<>(CreditModel.class));
-        assertEquals(null, credit);
+//        assertEquals(null, credit);
+        return credit;
     }
 }

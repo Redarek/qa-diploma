@@ -1,20 +1,25 @@
 package tests;
 
 import com.codeborne.selenide.logevents.SelenideLogger;
-import io.qameta.allure.selenide.AllureSelenide;
+import data.DataHelper;
 import lib.DBUtils;
-import lib.FormPage;
 import lib.Status;
+import io.qameta.allure.selenide.AllureSelenide;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
+import page.MainPage;
 
-import java.sql.SQLException;
+import static com.codeborne.selenide.Selenide.open;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestFormPaymentCredit {
-    private FormPage formPage;
+    private static String appURL = System.getProperty("app.url");
+    private static String appPORT = System.getProperty("app.port");
+
 
     @BeforeEach
-    void setUpPage() {
-        formPage = new FormPage();
+    void setUp() {
+        open(appURL + ":" + appPORT);
     }
 
     @BeforeAll
@@ -22,8 +27,9 @@ public class TestFormPaymentCredit {
         SelenideLogger.addListener("allure", new AllureSelenide());
     }
 
+    @SneakyThrows
     @AfterEach
-    void clearAll() throws SQLException{
+    void clearAll() {
         DBUtils.clearAllData();
     }
 
@@ -31,425 +37,484 @@ public class TestFormPaymentCredit {
     static void tearDownAll() {
         SelenideLogger.removeListener("allure");
     }
-
-    @Test
-    @DisplayName("Кредит, позитивный, ввод валидных значений в поля «Номер карты», \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldPayByApprovedCard() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardCVV("123");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.pushСontinueButton();
-        formPage.checkMessageSuccess();
-        DBUtils.checkCreditStatus(Status.APPROVED);
-    }
-
+    @SneakyThrows
     @Test
     @DisplayName("Позитивный, ввод валидных значений в поля «Номер карты», \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayByDeclinedCard() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444442");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardCVV("123");
-        formPage.setCardOwner("Radmir Ibragimov-Radmir");
-        formPage.pushСontinueButton();
-        formPage.checkMessageError();
-        DBUtils.checkCreditStatus(Status.DECLINED);
+    void shouldPayByApprovedCard() {
+        var cardInfo = DataHelper.Card.generateInfoWithApprovedNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageSuccess();
+        assertEquals(Status.APPROVED, DBUtils.checkCreditStatus());
     }
 
+    @SneakyThrows
+    @Test
+    @DisplayName("Позитивный, ввод валидных значений в поля «Номер карты», \"expiry date\", «Имя держателя карты» и \"CVV\"")
+    void shouldNoPayByDeclinedCard() {
+        var cardInfo = DataHelper.Card.generateInfoWithDeclinedNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageError();
+        assertEquals(Status.DECLINED, DBUtils.checkCreditStatus());
+    }
+
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле «Номер карты» и валидных в поля \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayLongCardNumber() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("44444444444444411111");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardCVV("123");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayLongCardNumber() {
+        var cardInfo = DataHelper.Card.generateInfoWithLongNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле «Номер карты» и валидных в поля \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayShortCardNumber() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444 4444 4444 444");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageSuccess();
-        DBUtils.checkCreditStatus(Status.DECLINED);
+    void shouldNoPayShortCardNumber() {
+        var cardInfo = DataHelper.Card.generateInfoWithShortNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageSuccess();
+        assertEquals(Status.DECLINED, DBUtils.checkCreditStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле «Номер карты» и валидных в поля \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayEmptyCardNumberField() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayEmptyCardNumberField() {
+        var cardInfo = DataHelper.Card.generateInfoWithEmptyNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Номер карты» и валидных в поля \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayCyrillicCardNumber() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("Абв");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayCyrillicCardNumber() {
+        var cardInfo = DataHelper.Card.generateInfoWithCyrillicNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Номер карты» и валидных в поля \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayLatinCardNumber() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("Abc");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayLatinCardNumber() {
+        var cardInfo = DataHelper.Card.generateInfoWithLatinNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Номер карты» и валидных в поля \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPaySpecialCharacterCardNumber() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("#$%&+");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPaySpecialCharacterCardNumber() {
+        var cardInfo = DataHelper.Card.generateInfoWithSpecialsNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Номер карты» и валидных в поля \"expiry date\", «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayZeroValueCardNumber() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("0000 0000 0000 0000");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayZeroValueCardNumber() {
+        var cardInfo = DataHelper.Card.generateInfoWithZeroNumber();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле \"expiry date\" и валидных в поля «Номер карты», «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayExpiredCard() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("21");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageOverDate();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayExpiredCard() {
+        var cardInfo = DataHelper.Card.generateInfoWithPastDate();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageOverDate();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле \"expiry date\" и валидных в поля «Номер карты», «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayEmptyDateField() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("");
-        formPage.setCardYear("");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayEmptyDateField() {
+        var cardInfo = DataHelper.Card.generateInfoWithEmptyDate();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"expiry date\" и валидных в поля «Номер карты», «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayZeroValueDate() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("00");
-        formPage.setCardYear("00");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongDate();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayZeroValueDate() {
+        var cardInfo = DataHelper.Card.generateInfoWithZeroDate();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongDate();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"expiry date\" и валидных в поля «Номер карты», «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayCyrillicDate() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("Абв");
-        formPage.setCardYear("Абв");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayCyrillicDate() {
+        var cardInfo = DataHelper.Card.generateInfoWithCyrillicDate();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
-
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"expiry date\" и валидных в поля «Номер карты», «Имя держателя карты» и \"CVV\"")
-    void shouldNoPayLatinDate()  throws SQLException{
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("Abc");
-        formPage.setCardYear("Abc");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayLatinDate() {
+        var cardInfo = DataHelper.Card.generateInfoWithLatinDate();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"expiry date\" и валидных в поля «Номер карты», «Имя держателя карты» и \"CVV\"")
-    void shouldNoPaySpecialCharacterDate() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("#$%&+");
-        formPage.setCardYear("#$%&+");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPaySpecialCharacterDate() {
+        var cardInfo = DataHelper.Card.generateInfoWithSpecialsDate();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле \"CVV\", и валидных в поля «Номер карты», «Имя держателя карты» и \"expiry date\"")
-    void shouldNoPayLongCVV() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("12345");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayLongCVV() {
+        var cardInfo = DataHelper.Card.generateInfoWithLongCvv();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле \"CVV\", и валидных в поля «Номер карты», «Имя держателя карты» и \"expiry date\"")
-    void shouldNoPayShortCVV() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("12");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayShortCVV() {
+        var cardInfo = DataHelper.Card.generateInfoWithShortCvv();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле \"CVV\", и валидных в поля «Номер карты», «Имя держателя карты» и \"expiry date\"")
-    void shouldNoPayEmptyCVVField() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayEmptyCVVField() {
+        var cardInfo = DataHelper.Card.generateInfoWithEmptyCvv();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"CVV\", и валидных в поля «Номер карты», «Имя держателя карты» и \"expiry date\"")
-    void shouldNoPayZeroValueCVV() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("000");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayZeroValueCVV() {
+        var cardInfo = DataHelper.Card.generateInfoWithZeroCvv();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"CVV\", и валидных в поля «Номер карты», «Имя держателя карты» и \"expiry date\"")
-    void shouldNoPayCyrillicCVV() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("Абв");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayCyrillicCVV() {
+        var cardInfo = DataHelper.Card.generateInfoWithCyrillicCvv();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"CVV\", и валидных в поля «Номер карты», «Имя держателя карты» и \"expiry date\"")
-    void shouldNoPayLatinCVV() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("Abc");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayLatinCVV() {
+        var cardInfo = DataHelper.Card.generateInfoWithLatinCvv();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле \"CVV\", и валидных в поля «Номер карты», «Имя держателя карты» и \"expiry date\"")
-    void shouldNoPaySpecialCharacterCVV() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("#$%&+");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPaySpecialCharacterCVV() {
+        var cardInfo = DataHelper.Card.generateInfoWithSpecialsCvv();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPayLongOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("абвгдАбвгдАбвгдАбвгдабвгдАбвгдАбвгдАбвгдабвгдАбвгдАбвгдАбвгдабвгдАбвгдАбвгдАбвгдабвгдАбвгдАбвгдАбвгдабвгдАбвгдАбвгдАбвгд");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayLongOwner() {
+        var cardInfo = DataHelper.Card.generateInfoWithLongOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод граничных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPayEmptyOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayEmptyOwner() {
+        var cardInfo = DataHelper.Card.generateInfoEmptyOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPaySpecialCharacterOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("#$%&+");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPaySpecialCharacterOwner() {
+        var cardInfo = DataHelper.Card.generateInfoWithSpecialsOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPayNumericOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("123456789");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageRequiredField();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayNumericOwner() {
+        var cardInfo = DataHelper.Card.generateInfoNumericOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageRequiredField();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPayHyphenAtBeginningOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("-RADMIR IBRAGIMOV-RADMIR");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayHyphenAtBeginningOwner() {
+        var cardInfo = DataHelper.Card.generateInfoWithHyphenAtStartOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPayHyphenAtEndOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("RADMIR- IBRAGIMOV-RADMIR-");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayHyphenAtEndOwner() {
+        var cardInfo = DataHelper.Card.generateInfoWithHyphenAtEndOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPayHyphenOnlyOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("---");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayHyphenOnlyOwner() {
+        var cardInfo = DataHelper.Card.generateInfoOnlyHyphensOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 
+    @SneakyThrows
     @Test
     @DisplayName("Негативный, ввод невалидных значений в поле «Имя держателя карты» и валидных в поля «Номер карты», \"expiry date\" и \"CVV\"")
-    void shouldNoPayCyrillicOwner() throws SQLException {
-        formPage.buyOnCredit();
-        formPage.setCardNumber("4444444444444441");
-        formPage.setCardMonth("11");
-        formPage.setCardYear("23");
-        formPage.setCardOwner("Радмир Ибрагимов-Радмир");
-        formPage.setCardCVV("123");
-        formPage.pushСontinueButton();
-        formPage.checkMessageWrongFormat();
-        DBUtils.checkCreditEmptyStatus();
+    void shouldNoPayCyrillicOwner() {
+        var cardInfo = DataHelper.Card.generateInfoCyrillicOwner();
+        new MainPage().buyOnCredit()
+                .setCardNumber(cardInfo.getNumber())
+                .setCardMonth(cardInfo.getMonth())
+                .setCardYear(cardInfo.getYear())
+                .setCardCVV(cardInfo.getCvv())
+                .setCardOwner(cardInfo.getOwner())
+                .pushContinueButton()
+                .checkMessageWrongFormat();
+        assertEquals(null, DBUtils.checkCreditEmptyStatus());
     }
 }
+

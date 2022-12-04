@@ -1,4 +1,4 @@
-package lib;
+package page;
 
 import com.codeborne.selenide.SelenideElement;
 
@@ -7,16 +7,8 @@ import java.util.List;
 import static com.codeborne.selenide.Condition.exactText;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$$;
-import static com.codeborne.selenide.Selenide.open;
 
-public class FormPage {
-
-    private static String url = System.getProperty("db.url");
-    private static String appURL = System.getProperty("app.url");
-    private static String appPORT = System.getProperty("app.port");
-    private static String userDB = System.getProperty("app.userDB");
-    private static String password = System.getProperty("app.password");
-
+public class CreditPaymentPage {
     List<SelenideElement> input = $$(".input__control");
     SelenideElement cardNumber = input.get(0);
     SelenideElement month = input.get(1);
@@ -24,64 +16,63 @@ public class FormPage {
     SelenideElement cardOwner = input.get(3);
     SelenideElement cvcOrCvvNumber = input.get(4);
 
-    public void buyForOwnMoney() {
-        open(appURL +":"+appPORT);
-        $$(".button__content").find(exactText("Купить")).click();
-        $$(".heading_theme_alfa-on-white").find(exactText("Оплата по карте")).shouldBe(visible);
-    }
-
-    public void buyOnCredit(){
-        open(appURL +":"+appPORT);
-        $$(".button__content").find(exactText("Купить в кредит")).click();
-        $$(".heading_theme_alfa-on-white").find(exactText("Кредит по данным карты")).shouldBe(visible);
-    }
-
-    public void checkMessageSuccess() {
+    public CreditPaymentPage checkMessageSuccess() {
         $$(".notification__title").find(exactText("Успешно")).waitUntil(visible, 15000);
+        return this;
     }
 
-    public void checkMessageError() {
+    public CreditPaymentPage checkMessageError() {
         $$(".notification__title").find(exactText("Ошибка")).waitUntil(visible, 15000);
+        return this;
     }
 
-    public void checkMessageWrongFormat() {
+    public CreditPaymentPage checkMessageWrongFormat() {
         $$(".input__sub").find(exactText("Неверный формат")).shouldBe(visible);
+        return this;
     }
 
-    public void checkMessageWrongDate() {
+    public CreditPaymentPage checkMessageWrongDate() {
         $$(".input__sub").find(exactText("Неверно указан срок действия карты")).shouldBe(visible);
+        return this;
     }
 
-    public void checkMessageOverDate() {
+    public CreditPaymentPage checkMessageOverDate() {
         $$(".input__sub").find(exactText("Истёк срок действия карты")).shouldBe(visible);
+        return this;
     }
 
-    public void checkMessageRequiredField() {
+    public CreditPaymentPage checkMessageRequiredField() {
         $$(".input__sub").find(exactText("Поле обязательно для заполнения")).shouldBe(visible);
+        return this;
     }
 
-    public void setCardNumber(String cNumber) {
+    public CreditPaymentPage setCardNumber(String cNumber) {
         cardNumber.setValue(cNumber);
+        return this;
     }
 
-    public void setCardMonth(String cMonth) {
+    public CreditPaymentPage setCardMonth(String cMonth) {
         month.setValue(cMonth);
+        return this;
     }
 
-    public void setCardYear(String cYear) {
+    public CreditPaymentPage setCardYear(String cYear) {
         year.setValue(cYear);
+        return this;
     }
 
-    public void setCardOwner(String cOwner) {
+    public CreditPaymentPage setCardOwner(String cOwner) {
         cardOwner.setValue(cOwner);
+        return this;
     }
 
-    public void setCardCVV(String cCvv) {
+    public CreditPaymentPage setCardCVV(String cCvv) {
         cvcOrCvvNumber.setValue(cCvv);
+        return this;
     }
 
-    public void pushСontinueButton(){
+    public CreditPaymentPage pushContinueButton() {
         $$(".button__content").find(exactText("Продолжить")).click();
+        return this;
     }
-
 }
