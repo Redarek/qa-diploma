@@ -25,15 +25,14 @@ public class DBUtils {
         val conn = DriverManager.getConnection(url, userDB, password);
         val paymentDataSQL = "SELECT status FROM payment_entity;";
         val payment = runner.query(conn, paymentDataSQL, new BeanHandler<>(PaymentModel.class));
-//        assertEquals(status, payment.status);
         return payment.status;
     }
+
     public static PaymentModel checkPaymentEmptyStatus() throws SQLException {
         val runner = new QueryRunner();
         val conn = DriverManager.getConnection(url, userDB, password);
         val paymentDataSQL = "SELECT status FROM payment_entity WHERE status IS NULL;";
         val credit = runner.query(conn, paymentDataSQL, new BeanHandler<>(PaymentModel.class));
-//        assertEquals(null, credit);
         return credit;
     }
 
@@ -42,7 +41,6 @@ public class DBUtils {
         val conn = DriverManager.getConnection(url, userDB, password);
         val creditDataSQL = "SELECT status FROM credit_request_entity;";
         val credit = runner.query(conn, creditDataSQL, new BeanHandler<>(CreditModel.class));
-//        assertEquals(status, credit.status);
         return credit.status;
     }
 
@@ -51,7 +49,6 @@ public class DBUtils {
         val conn = DriverManager.getConnection(url, userDB, password);
         val creditDataSQL = "SELECT status FROM credit_request_entity WHERE status IS NULL;";
         val credit = runner.query(conn, creditDataSQL, new BeanHandler<>(CreditModel.class));
-//        assertEquals(null, credit);
         return credit;
     }
 }

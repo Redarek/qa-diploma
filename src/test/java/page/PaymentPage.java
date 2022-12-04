@@ -16,11 +16,6 @@ public class PaymentPage {
     SelenideElement cardOwner = input.get(3);
     SelenideElement cvcOrCvvNumber = input.get(4);
 
-//    public PaymentPage buyForOwnMoney() {
-//        $$(".button__content").find(exactText("Купить")).click();
-//        $$(".heading_theme_alfa-on-white").find(exactText("Оплата по карте")).shouldBe(visible);
-//    }
-
     public PaymentPage checkMessageSuccess() {
         $$(".notification__title").find(exactText("Успешно")).waitUntil(visible, 15000);
         return this;

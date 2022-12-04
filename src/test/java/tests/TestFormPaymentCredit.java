@@ -37,6 +37,7 @@ public class TestFormPaymentCredit {
     static void tearDownAll() {
         SelenideLogger.removeListener("allure");
     }
+
     @SneakyThrows
     @Test
     @DisplayName("Позитивный, ввод валидных значений в поля «Номер карты», \"expiry date\", «Имя держателя карты» и \"CVV\"")
